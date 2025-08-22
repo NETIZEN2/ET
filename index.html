@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Europe Trip Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
 </head>
 <body>
   <div id="login">
@@ -29,6 +30,7 @@
         <button id="set-location" type="button">Set Location</button>
       </div>
       <a id="maps-link" target="_blank">Directions to accommodation</a>
+      <div id="map" style="height:300px"></div>
     </section>
     <section id="routes"></section>
     <section id="itinerary"></section>
@@ -37,6 +39,7 @@
   </div>
   <script src="itinerary.js"></script>
   <script src="logic.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

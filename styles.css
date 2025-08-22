@@ -20,15 +20,32 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-header {
+header.top-bar {
   background: var(--color-primary);
   color: #fff;
   padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
   text-align: center;
 }
 
+#date-nav {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
 #dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#dashboard main {
   display: grid;
+  flex: 1;
   padding: var(--spacing-md);
   gap: var(--spacing-md);
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

@@ -15,13 +15,10 @@ function getEnv(name) {
 function updateMap(lat, lon, day) {
   if (typeof mapboxgl === 'undefined') return;
   const token = getEnv('MAPBOX_TOKEN') || getEnv('FSQ_API_KEY');
-  if (!token) {
-    const el = typeof document !== 'undefined' ? document.getElementById('map') : null;
-    if (el) el.textContent = 'Map cannot load: missing MAPBOX_TOKEN';
-    return;
-  }
   if (!map) {
-    mapboxgl.accessToken = token;
+    if (token && typeof mapboxgl.accessToken !== 'undefined') {
+      mapboxgl.accessToken = token;
+    }
     map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -195,44 +192,12 @@ function pinItem(title) {
   }
 }
 
-  function fetchSuggestions(lat, lon) {
-    const apiKey = getEnv('FSQ_API_KEY');
-    const container = typeof document !== 'undefined' ? document.getElementById('suggestions') : null;
-    if (!apiKey) {
-      if (container) container.textContent = 'Nearby suggestions unavailable: missing FSQ_API_KEY';
-      return;
-    }
-    const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
-    fetch(url, { headers: { 'Authorization': apiKey } })
-      .then(res => res.json())
-      .then(data => {
-        const list = (data.results || []).map(p => {
-          const plat = p.geocodes.main.latitude;
-          const plon = p.geocodes.main.longitude;
-          return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${plat}" data-lon="${plon}">Pin</button></li>`;
-        }).join('');
-        if (container) {
-          container.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
-          container.querySelectorAll('.pin-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const { name, lat, lon } = btn.dataset;
-              fetch('/api/pins', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
-              });
-            });
-          });
-        }
-      })
-      .catch(() => {
-        if (container) container.textContent = 'Could not load suggestions';
-      });
-  }
 function fetchSuggestions(lat, lon) {
-  const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
+  const apiKey = getEnv('FSQ_API_KEY');
+  const container = typeof document !== 'undefined' ? document.getElementById('suggestions') : null;
+  const headers = apiKey ? { Authorization: apiKey } : {};
   const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
-  return fetch(url, { headers: { 'Authorization': apiKey } })
+  fetch(url, { headers })
     .then(res => res.json())
     .then(data => {
       const places = data.results || (data.query && data.query.geosearch) || [];
@@ -242,25 +207,25 @@ function fetchSuggestions(lat, lon) {
         const plon = p.geocodes && p.geocodes.main ? p.geocodes.main.longitude : '';
         return `<li>${name} <button class="pin-btn" data-name="${name}" data-lat="${plat}" data-lon="${plon}">Pin</button></li>`;
       }).join('');
-      const sugg = document.getElementById('suggestions');
-      if (sugg) {
-        sugg.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
-        sugg.querySelectorAll('.pin-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const { name, lat, lon } = btn.dataset;
-            fetch('/api/pins', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+      if (container) {
+        container.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+        if (typeof container.querySelectorAll === 'function') {
+          container.querySelectorAll('.pin-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const { name, lat, lon } = btn.dataset;
+              fetch('/api/pins', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+              });
+              pinItem(name);
             });
-            pinItem(name);
           });
-        });
+        }
       }
     })
     .catch(() => {
-      const sugg = document.getElementById('suggestions');
-      if (sugg) sugg.textContent = 'Could not load suggestions';
+      if (container) container.textContent = 'Could not load suggestions';
     });
 }
 
@@ -349,39 +314,6 @@ function initDashboard(selectedDate) {
   }
 }
 
-  function fetchSuggestions(lat, lon) {
-    const apiKey = getEnv('FSQ_API_KEY');
-    const container = document.getElementById('suggestions');
-    if (!apiKey) {
-      if (container) container.textContent = 'Nearby suggestions unavailable: missing FSQ_API_KEY';
-      return;
-    }
-    const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
-    fetch(url, { headers: { 'Authorization': apiKey } })
-      .then(res => res.json())
-      .then(data => {
-        const list = (data.results || []).map(p => {
-          const plat = p.geocodes.main.latitude;
-          const plon = p.geocodes.main.longitude;
-          return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${plat}" data-lon="${plon}">Pin</button></li>`;
-        }).join('');
-        if (container) {
-          container.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
-          container.querySelectorAll('.pin-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const { name, lat, lon } = btn.dataset;
-              fetch('/api/pins', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
-              });
-            });
-          });
-        }
-      })
-      .catch(() => {
-        if (container) container.textContent = 'Could not load suggestions';
-      });
 document.addEventListener('DOMContentLoaded', () => {
   const datePicker = document.getElementById('date-picker');
   const prevBtn = document.getElementById('prev-date');

@@ -2,7 +2,11 @@
   const itinerary = global.itinerary || require('./itinerary.js');
 
   function getItineraryForDate(dateStr) {
-    return itinerary.find(day => day.date === dateStr);
+    return itinerary[dateStr];
+  }
+
+  function getLocalDateString(date = new Date(), timeZone) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone }).format(date);
   }
 
   function parseTime(str) {
@@ -46,8 +50,8 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getItineraryForDate, getFreeTimeBlocks, haversineDistance };
+    module.exports = { getItineraryForDate, getLocalDateString, getFreeTimeBlocks, haversineDistance };
   } else {
-    global.TripLogic = { getItineraryForDate, getFreeTimeBlocks, haversineDistance };
+    global.TripLogic = { getItineraryForDate, getLocalDateString, getFreeTimeBlocks, haversineDistance };
   }
 })(this);

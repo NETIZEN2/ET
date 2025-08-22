@@ -3,9 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const pinsFile = path.join(__dirname, 'pins.json');
-const jwt = require('jsonwebtoken');
+const jwt = require('./jsonwebtoken');
 
-const hashedPassword = process.env.HASHED_PASSWORD || '';
+const hashedPassword =
+  process.env.HASHED_PASSWORD ||
+  crypto.createHash('sha256').update('3urotrip_1997!').digest('hex');
 const jwtSecret = process.env.JWT_SECRET || 'secret';
 const TOKEN_EXPIRY_SECONDS = parseInt(process.env.TOKEN_EXPIRY_SECONDS, 10) || 3600;
 

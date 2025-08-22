@@ -25,6 +25,19 @@ function handleApi(req, res) {
         const pins = readPins();
         pins.push(pin);
         fs.writeFileSync(pinsFile, JSON.stringify(pins, null, 2));
+        const repo = process.env.GITHUB_REPO;
+        const token = process.env.GITHUB_TOKEN;
+        if (repo && token && typeof fetch === 'function') {
+          const content = Buffer.from(JSON.stringify(pins, null, 2)).toString('base64');
+          fetch(`https://api.github.com/repos/${repo}/contents/pins.json`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ message: 'Update pins', content })
+          }).catch(() => {});
+        }
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch {

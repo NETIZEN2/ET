@@ -10,8 +10,11 @@
   <div id="login">
     <form id="login-form">
       <h2>Enter Password</h2>
-      <input type="password" id="password" />
-      <button type="submit">Enter</button>
+      <label for="password">Password
+        <input type="password" id="password" aria-describedby="password-hint" />
+      </label>
+      <p id="password-hint">Enter the password to access the dashboard.</p>
+      <button type="submit" aria-label="Submit password">Enter</button>
     </form>
   </div>
   <div id="dashboard">

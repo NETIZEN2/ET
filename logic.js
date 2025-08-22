@@ -5,6 +5,10 @@
     return itinerary.find(day => day.date === dateStr);
   }
 
+  function getLocalDateString(date = new Date(), timeZone) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone }).format(date);
+  }
+
   function parseTime(str) {
     const [h, m] = str.split(':').map(Number);
     return h * 60 + m;
@@ -46,8 +50,8 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getItineraryForDate, getFreeTimeBlocks, haversineDistance };
+    module.exports = { getItineraryForDate, getLocalDateString, getFreeTimeBlocks, haversineDistance };
   } else {
-    global.TripLogic = { getItineraryForDate, getFreeTimeBlocks, haversineDistance };
+    global.TripLogic = { getItineraryForDate, getLocalDateString, getFreeTimeBlocks, haversineDistance };
   }
 })(this);

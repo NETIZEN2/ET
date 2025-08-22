@@ -1,5 +1,5 @@
 (function(global){
-  const itinerary = [
+  const itineraryArray = [
     {
       date: '2023-09-12',
       travel: 'Brisbane, Australia > Singapore > Paris, France',
@@ -384,6 +384,11 @@
       travel: 'Lyon, France > Paris, France @ 10:20 (Arrive 11:30); Paris, France > Singapore > Brisbane, Australia > Canberra, Australia'
     }
   ];
+
+  const itinerary = itineraryArray.reduce((acc, { date, ...rest }) => {
+    acc[date] = rest;
+    return acc;
+  }, {});
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = itinerary;

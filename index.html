@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Europe Trip Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
@@ -15,30 +17,22 @@
     <section id="current-location" role="region" aria-labelledby="current-location-heading">
       <h2 id="current-location-heading">Current Location</h2>
       <p id="location" aria-live="polite">Detecting...</p>
-    <div id="date-nav">
-      <button id="prev-date" type="button">Previous</button>
-      <input id="date-picker" type="date" />
-      <button id="next-date" type="button">Next</button>
-    </div>
-    <section>
-      <h2>Current Location</h2>
-      <p id="location">Detecting...</p>
       <div id="manual-location-container" style="display:none">
         <input id="manual-location" placeholder="lat,lon" aria-label="Enter latitude and longitude" />
         <button id="set-location" type="button" aria-label="Set location manually">Set Location</button>
       </div>
       <a id="maps-link" href="#" target="_blank" rel="noopener" aria-label="Directions to accommodation">Directions to accommodation</a>
+      <div id="map" style="height:300px"></div>
     </section>
+    <div id="date-nav">
+      <button id="prev-date" type="button">Previous</button>
+      <input id="date-picker" type="date" />
+      <button id="next-date" type="button">Next</button>
+    </div>
+    <section id="routes"></section>
     <section id="itinerary" role="region" aria-label="Itinerary"></section>
     <section id="free-time" role="region" aria-label="Free Time"></section>
     <section id="suggestions" role="region" aria-label="Suggestions"></section>
-      <a id="maps-link" target="_blank">Directions to accommodation</a>
-      <div id="map" style="height:300px"></div>
-    </section>
-    <section id="routes"></section>
-    <section id="itinerary"></section>
-    <section id="free-time"></section>
-    <section id="suggestions"></section>
     <section id="pinned"></section>
   </div>
   <script src="itinerary.js"></script>

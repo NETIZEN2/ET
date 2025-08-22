@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="login">
+  <div id="login" role="main">
     <form id="login-form">
       <h2>Enter Password</h2>
       <label for="password">Password
@@ -17,22 +17,22 @@
       <button type="submit" aria-label="Submit password">Enter</button>
     </form>
   </div>
-  <div id="dashboard">
+  <div id="dashboard" role="main">
     <header>
       <h1>Europe Trip Dashboard</h1>
     </header>
-    <section>
-      <h2>Current Location</h2>
-      <p id="location">Detecting...</p>
+    <section id="current-location" role="region" aria-labelledby="current-location-heading">
+      <h2 id="current-location-heading">Current Location</h2>
+      <p id="location" aria-live="polite">Detecting...</p>
       <div id="manual-location-container" style="display:none">
-        <input id="manual-location" placeholder="lat,lon" />
-        <button id="set-location" type="button">Set Location</button>
+        <input id="manual-location" placeholder="lat,lon" aria-label="Enter latitude and longitude" />
+        <button id="set-location" type="button" aria-label="Set location manually">Set Location</button>
       </div>
-      <a id="maps-link" target="_blank">Directions to accommodation</a>
+      <a id="maps-link" href="#" target="_blank" rel="noopener" aria-label="Directions to accommodation">Directions to accommodation</a>
     </section>
-    <section id="itinerary"></section>
-    <section id="free-time"></section>
-    <section id="suggestions"></section>
+    <section id="itinerary" role="region" aria-label="Itinerary"></section>
+    <section id="free-time" role="region" aria-label="Free Time"></section>
+    <section id="suggestions" role="region" aria-label="Suggestions"></section>
   </div>
   <script src="itinerary.js"></script>
   <script src="logic.js"></script>

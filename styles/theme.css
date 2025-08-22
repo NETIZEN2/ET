@@ -1,0 +1,7 @@
+/* Light theme is default via tokens. Dark theme overrides */
+@media (prefers-color-scheme: dark){
+  :root{--bg:#111;--surface:#1b1b1b;--surface-2:#333;--text:#f5f5f5;--muted:#bbb;--shadow:rgba(0,0,0,0.5)}
+}
+
+[data-theme="dark"]{--bg:#111;--surface:#1b1b1b;--surface-2:#333;--text:#f5f5f5;--muted:#bbb;--shadow:rgba(0,0,0,0.5)}
+[data-theme="light"]{--bg:#fff;--surface:#f9f9f9;--surface-2:#eaeaea;--text:#111;--muted:#666;--shadow:rgba(0,0,0,0.1)}

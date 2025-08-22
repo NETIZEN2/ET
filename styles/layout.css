@@ -1,0 +1,6 @@
+.stack > * + * {margin-block-start:var(--space-4)}
+.cluster{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.grid{display:grid;gap:var(--space-4)}
+.sidebar{display:flex;flex-wrap:wrap;gap:var(--space-4)}
+.sidebar > :first-child{flex-basis:20rem;flex-grow:1}
+.sidebar > :last-child{flex-basis:15rem;flex-grow:1}

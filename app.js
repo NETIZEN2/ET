@@ -1,13 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const password = 'eurotrip';
   const loginSection = document.getElementById('login');
   const dashboard = document.getElementById('dashboard');
   const loginForm = document.getElementById('login-form');
 
-  loginForm.addEventListener('submit', (e) => {
+  async function attemptAutoLogin() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const res = await fetch('/api/validate', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      loginSection.style.display = 'none';
+      dashboard.style.display = 'block';
+      initDashboard();
+    } else {
+      localStorage.removeItem('token');
+    }
+  }
+
+  attemptAutoLogin();
+
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = document.getElementById('password').value;
-    if (input === password) {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: input })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('token', data.token);
       loginSection.style.display = 'none';
       dashboard.style.display = 'block';
       initDashboard();

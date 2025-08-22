@@ -2,7 +2,7 @@
   const itinerary = global.itinerary || require('./itinerary.js');
 
   function getItineraryForDate(dateStr) {
-    return itinerary.find(day => day.date === dateStr);
+    return itinerary[dateStr];
   }
 
   function parseTime(str) {

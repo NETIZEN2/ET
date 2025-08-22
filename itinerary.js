@@ -39,10 +39,11 @@
         name: 'Hotel Lafayette',
         address: '6, rue Buffault, 9th arr., 75009 Paris, France',
         checkIn: '15:00',
-        checkOut: '11:00'
+        checkOut: '11:00',
+        bookingRef: 'XYZ123'
       },
       activities: [
-        { start: '12:30', end: '15:00', title: 'Eiffel Tower visit' }
+        { start: '12:30', end: '15:00', title: 'Eiffel Tower visit', description: 'Guided tour of the Eiffel Tower' }
       ],
       travel: 'Check out Pullman Paris; move to Hotel Lafayette'
     },

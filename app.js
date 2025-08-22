@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       localStorage.setItem('token', data.token);
       loginSection.style.display = 'none';
-      dashboard.style.display = 'block';
+      dashboard.classList.add('active');
       initDashboard();
     } else {
       alert('Incorrect password');

@@ -315,19 +315,13 @@ async function loadRoutes(lat, lon, destination) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const loginSection = document.getElementById('login');
   const dashboard = document.getElementById('dashboard');
-  const loginForm = document.getElementById('login-form');
   manualContainer = document.getElementById('manual-location-container');
   manualInput = document.getElementById('manual-location');
   setLocationBtn = document.getElementById('set-location');
   datePicker = document.getElementById('date-picker');
   const prevBtn = document.getElementById('prev-date');
   const nextBtn = document.getElementById('next-date');
-  const manualContainer = document.getElementById('manual-location-container');
-  const manualInput = document.getElementById('manual-location');
-  const setLocationBtn = document.getElementById('set-location');
-  let currentDay;
   let clockInterval;
 
   function startClock(timeZone) {
@@ -396,33 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboard(d.toISOString().split('T')[0]);
   });
 
-  function attemptAutoLogin() {
-    if (localStorage.getItem('authorized') === 'true') {
-      loginSection.style.display = 'none';
-      dashboard.classList.add('active');
-      initDashboard();
-    }
-  }
-
-  attemptAutoLogin();
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const input = document.getElementById('password').value;
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: input })
-    });
-    if (res.ok) {
-      localStorage.setItem('authorized', 'true');
-      loginSection.style.display = 'none';
-      dashboard.classList.add('active');
-      initDashboard();
-    } else {
-      alert('Incorrect password');
-    }
-  });
+  initDashboard();
 });
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 const pinsFile = path.join(__dirname, 'pins.json');
-const password = process.env.PASSWORD || '3urotrip_1997!';
 
 function readPins() {
   if (fs.existsSync(pinsFile)) {
@@ -17,26 +16,6 @@ function readPins() {
 }
 
 function handleApi(req, res) {
-  if (req.method === 'POST' && req.url === '/api/login') {
-    let body = '';
-    req.on('data', chunk => (body += chunk));
-    req.on('end', () => {
-      try {
-        const { password: input } = JSON.parse(body || '{}');
-        if (input === password) {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } else {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid credentials' }));
-        }
-      } catch {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Bad request' }));
-      }
-    });
-    return true;
-  }
   if (req.method === 'POST' && req.url === '/api/pins') {
     let body = '';
     req.on('data', chunk => (body += chunk));

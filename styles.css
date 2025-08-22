@@ -14,13 +14,9 @@ header {
 }
 
 #dashboard {
-  display: none;
+  display: grid;
   padding: 1rem;
   gap: 1rem;
-}
-
-#dashboard.active {
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
@@ -32,19 +28,7 @@ section {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#login {
-  display: flex;
-  height: 100vh;
-  justify-content: center;
-  align-items: center;
-}
 
-#login form {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
 
 button {
   padding: 0.75rem 1rem;

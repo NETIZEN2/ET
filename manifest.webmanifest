@@ -1,0 +1,9 @@
+{
+  "name": "Europe Trip",
+  "short_name": "EU Trip",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0085c7",
+  "icons": []
+}

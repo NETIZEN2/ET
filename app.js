@@ -1,4 +1,6 @@
+// Cleaned and consolidated dashboard logic
 let map, userMarker, accommodationMarker;
+let currentDate, currentDay;
 
 function getEnv(name) {
   if (typeof process !== 'undefined' && process.env && process.env[name]) {
@@ -44,78 +46,37 @@ function updateMap(lat, lon, day) {
   }
 }
 
-function initDashboard() {
-  const today = new Date().toISOString().split('T')[0];
-  const day = TripLogic.getItineraryForDate(today);
-  const manualContainer = document.getElementById('manual-location-container');
-  const manualInput = document.getElementById('manual-location');
-  const setLocationBtn = document.getElementById('set-location');
-
-  function applyLocation(lat, lon) {
-    document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-    if (day && day.accommodation) {
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.accommodation.address)}&origin=${lat},${lon}`;
-      document.getElementById('maps-link').href = mapsUrl;
-    }
-    updateMap(lat, lon, day);
-    fetchSuggestions(lat, lon);
-  }
-
-  setLocationBtn.addEventListener('click', () => {
-    const [lat, lon] = manualInput.value.split(',').map(s => parseFloat(s.trim()));
-    if (isFinite(lat) && isFinite(lon)) {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('manualLocation', `${lat},${lon}`);
-      }
-      applyLocation(lat, lon);
-    } else {
-      alert('Please enter valid coordinates in "lat,lon" format');
-    }
-  });
-
-  function handleNoGeo() {
-    manualContainer.style.display = 'block';
-    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('manualLocation') : null;
-    if (stored) {
-      const [lat, lon] = stored.split(',').map(Number);
-      if (isFinite(lat) && isFinite(lon)) {
-        applyLocation(lat, lon);
-        return;
-      }
-    }
-    document.getElementById('location').textContent = 'Location unavailable';
-  }
-
-  displayItinerary(day);
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-      if (day && day.accommodation) {
-        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.accommodation.address)}&origin=${lat},${lon}`;
-      document.getElementById('maps-link').href = mapsUrl;
-      }
-      fetchSuggestions(lat, lon);
-      if (day && day.accommodation) {
-        loadRoutes(lat, lon, day.accommodation.address);
-      }
-    }, () => {
-      document.getElementById('location').textContent = 'Location unavailable';
-    });
-      applyLocation(pos.coords.latitude, pos.coords.longitude);
-    }, handleNoGeo);
-  } else {
-    handleNoGeo();
-  }
-}
-
 function displayItinerary(day) {
   const container = document.getElementById('itinerary');
   if (!container) return;
   container.innerHTML = '';
   if (!day) {
     container.textContent = 'No itinerary for today';
+    return;
+  }
+  if (typeof document.createElement !== 'function') {
+    let html = '';
+    if (day.accommodation) {
+      html += `<h3>Accommodation</h3><p>${day.accommodation.name}<br>${day.accommodation.address}</p>`;
+    }
+    if (day.travel) {
+      html += `<h3>Travel</h3><p>${day.travel}</p>`;
+    }
+    if (day.activities && day.activities.length) {
+      html += '<h3>Activities</h3><ul>' +
+        day.activities.map(a => `<li>${a.start ? a.start + ' - ' : ''}${a.end ? a.end + ': ' : ''}${a.title}</li>`).join('') + '</ul>';
+    }
+    container.innerHTML = html;
+    const freeBlocks = TripLogic.getFreeTimeBlocks(day);
+    const freeContainer = document.getElementById('free-time');
+    if (freeContainer) {
+      if (freeBlocks.length > 0) {
+        freeContainer.innerHTML = '<h3>Free Time</h3><ul>' +
+          freeBlocks.map(b => `<li>${b.start} - ${b.end}</li>`).join('') + '</ul>';
+      } else {
+        freeContainer.textContent = 'No free time today';
+      }
+    }
     return;
   }
   if (day.accommodation) {
@@ -190,31 +151,32 @@ function displayItinerary(day) {
     });
     container.appendChild(ul);
   }
-
   const freeBlocks = TripLogic.getFreeTimeBlocks(day);
   const freeContainer = document.getElementById('free-time');
-  if (!freeContainer) return;
-  freeContainer.innerHTML = '';
-  if (freeBlocks.length > 0) {
-    const h3 = document.createElement('h3');
-    h3.textContent = 'Free Time';
-    freeContainer.appendChild(h3);
-    const ul = document.createElement('ul');
-    freeBlocks.forEach(b => {
-      const li = document.createElement('li');
-      li.textContent = `${b.start} - ${b.end}`;
-      ul.appendChild(li);
-    });
-    freeContainer.appendChild(ul);
-  } else {
-    freeContainer.textContent = 'No free time today';
+  if (freeContainer) {
+    freeContainer.innerHTML = '';
+    if (freeBlocks.length > 0) {
+      const h3 = document.createElement('h3');
+      h3.textContent = 'Free Time';
+      freeContainer.appendChild(h3);
+      const ul = document.createElement('ul');
+      freeBlocks.forEach(b => {
+        const li = document.createElement('li');
+        li.textContent = `${b.start} - ${b.end}`;
+        ul.appendChild(li);
+      });
+      freeContainer.appendChild(ul);
+    } else {
+      freeContainer.textContent = 'No free time today';
+    }
   }
 }
 
 function displayPinned(date) {
   const key = `pinned-${date}`;
-  const items = JSON.parse(localStorage.getItem(key) || '[]');
+  const items = JSON.parse((typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '[]');
   const container = document.getElementById('pinned');
+  if (!container) return;
   if (items.length) {
     container.innerHTML = '<h3>Pinned</h3><ul>' + items.map(t => `<li>${t}</li>`).join('') + '</ul>';
   } else {
@@ -223,7 +185,7 @@ function displayPinned(date) {
 }
 
 function pinItem(title) {
-  if (!currentDate) return;
+  if (!currentDate || typeof localStorage === 'undefined') return;
   const key = `pinned-${currentDate}`;
   const items = JSON.parse(localStorage.getItem(key) || '[]');
   if (!items.includes(title)) {
@@ -267,48 +229,41 @@ function pinItem(title) {
         if (container) container.textContent = 'Could not load suggestions';
       });
   }
-
-let currentDay;
-let currentDate;
-let manualContainer;
-let manualInput;
-let setLocationBtn;
-let datePicker;
-
-function applyLocation(lat, lon) {
-  document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-  if (currentDay && currentDay.accommodation) {
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentDay.accommodation.address)}&origin=${lat},${lon}`;
-    document.getElementById('maps-link').href = mapsUrl;
-  }
-  fetchSuggestions(lat, lon);
+function fetchSuggestions(lat, lon) {
+  const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
+  const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
+  return fetch(url, { headers: { 'Authorization': apiKey } })
+    .then(res => res.json())
+    .then(data => {
+      const places = data.results || (data.query && data.query.geosearch) || [];
+      const list = places.map(p => {
+        const name = p.name || p.title;
+        const plat = p.geocodes && p.geocodes.main ? p.geocodes.main.latitude : '';
+        const plon = p.geocodes && p.geocodes.main ? p.geocodes.main.longitude : '';
+        return `<li>${name} <button class="pin-btn" data-name="${name}" data-lat="${plat}" data-lon="${plon}">Pin</button></li>`;
+      }).join('');
+      const sugg = document.getElementById('suggestions');
+      if (sugg) {
+        sugg.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+        sugg.querySelectorAll('.pin-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const { name, lat, lon } = btn.dataset;
+            fetch('/api/pins', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+            });
+            pinItem(name);
+          });
+        });
+      }
+    })
+    .catch(() => {
+      const sugg = document.getElementById('suggestions');
+      if (sugg) sugg.textContent = 'Could not load suggestions';
+    });
 }
 
-function initDashboard(selectedDate) {
-  currentDate = selectedDate || localStorage.getItem('lastDate') || TripLogic.getLocalDateString();
-  localStorage.setItem('lastDate', currentDate);
-  if (datePicker) datePicker.value = currentDate;
-  currentDay = TripLogic.getItineraryForDate(currentDate);
-  displayItinerary(currentDay);
-  displayPinned(currentDate);
-  const stored = localStorage.getItem('manualLocation');
-
-  function handleNoGeo() {
-    if (manualContainer) manualContainer.style.display = 'block';
-    if (stored) {
-      const [lat, lon] = stored.split(',').map(Number);
-      applyLocation(lat, lon);
-    } else {
-      document.getElementById('location').textContent = 'Location unavailable';
-    }
-  }
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      applyLocation(pos.coords.latitude, pos.coords.longitude);
-    }, handleNoGeo);
-  } else {
-    handleNoGeo();
 async function loadRoutes(lat, lon, destination) {
   const container = document.getElementById('routes');
   if (!container || !destination) return;
@@ -333,41 +288,18 @@ async function loadRoutes(lat, lon, destination) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const dashboard = document.getElementById('dashboard');
-  manualContainer = document.getElementById('manual-location-container');
-  manualInput = document.getElementById('manual-location');
-  setLocationBtn = document.getElementById('set-location');
-  datePicker = document.getElementById('date-picker');
-  const prevBtn = document.getElementById('prev-date');
-  const nextBtn = document.getElementById('next-date');
-  let clockInterval;
+function initDashboard(selectedDate) {
+  currentDate = selectedDate || (typeof localStorage !== 'undefined' && (localStorage.getItem('lastDate') || TripLogic.getLocalDateString()));
+  if (typeof localStorage !== 'undefined') localStorage.setItem('lastDate', currentDate);
+  const datePicker = document.getElementById('date-picker');
+  if (datePicker) datePicker.value = currentDate;
+  currentDay = TripLogic.getItineraryForDate(currentDate);
+  displayItinerary(currentDay);
+  displayPinned(currentDate);
 
-  function startClock(timeZone) {
-    const header = document.querySelector('#dashboard header');
-    let clockEl = document.getElementById('clock');
-    if (!clockEl) {
-      clockEl = document.createElement('span');
-      clockEl.id = 'clock';
-      header.appendChild(clockEl);
-    }
-    const formatter = new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone
-    });
-    function update() {
-      clockEl.textContent = formatter.format(new Date());
-    }
-    update();
-    clearInterval(clockInterval);
-    clockInterval = setInterval(update, 60 * 1000);
-  }
-
-  function fetchTimezone(lat, lon) {
-    const url = `https://timeapi.io/api/TimeZone/coordinate?latitude=${lat}&longitude=${lon}`;
-    return fetch(url).then(res => res.json()).then(data => data.timeZone);
-  }
+  const manualContainer = document.getElementById('manual-location-container');
+  const manualInput = document.getElementById('manual-location');
+  const setLocationBtn = document.getElementById('set-location');
 
   function applyLocation(lat, lon) {
     document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
@@ -382,101 +314,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  setLocationBtn.addEventListener('click', () => {
+  setLocationBtn && setLocationBtn.addEventListener('click', () => {
     const [lat, lon] = manualInput.value.split(',').map(s => parseFloat(s.trim()));
     if (isFinite(lat) && isFinite(lon)) {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('manualLocation', `${lat},${lon}`);
       }
       applyLocation(lat, lon);
-      fetchTimezone(lat, lon).then(startClock).catch(() => {
-        startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
-      });
     } else {
-      alert('Please enter valid coordinates in "lat,lon" format');
+      if (typeof alert !== 'undefined') alert('Please enter valid coordinates in "lat,lon" format');
     }
   });
 
-  datePicker.addEventListener('change', (e) => initDashboard(e.target.value));
-  prevBtn.addEventListener('click', () => {
-    const d = new Date(datePicker.value);
-    d.setDate(d.getDate() - 1);
-    initDashboard(d.toISOString().split('T')[0]);
-  });
-  nextBtn.addEventListener('click', () => {
-    const d = new Date(datePicker.value);
-    d.setDate(d.getDate() + 1);
-    initDashboard(d.toISOString().split('T')[0]);
-  });
-
-  initDashboard();
-});
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { initDashboard, pinItem, displayPinned };
-
-  function initDashboard() {
-    const today = TripLogic.getLocalDateString();
-    const day = TripLogic.getItineraryForDate(today);
-    currentDay = day;
-    displayItinerary(day);
+  function handleNoGeo() {
+    if (manualContainer) manualContainer.style.display = 'block';
     const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('manualLocation') : null;
-
-    function handleNoGeo() {
-      manualContainer.style.display = 'block';
-      if (stored) {
-        const [lat, lon] = stored.split(',').map(Number);
+    if (stored) {
+      const [lat, lon] = stored.split(',').map(Number);
+      if (isFinite(lat) && isFinite(lon)) {
         applyLocation(lat, lon);
-        fetchTimezone(lat, lon).then(startClock).catch(() => {
-          startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
-        });
-      } else {
-        document.getElementById('location').textContent = 'Location unavailable';
-        startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        return;
       }
     }
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const { latitude, longitude } = pos.coords;
-        applyLocation(latitude, longitude);
-        fetchTimezone(latitude, longitude).then(startClock).catch(() => {
-          startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
-        });
-      }, handleNoGeo);
-    } else {
-      handleNoGeo();
-    }
+    const locEl = document.getElementById('location');
+    if (locEl) locEl.textContent = 'Location unavailable';
   }
 
-  function displayItinerary(day) {
-    const container = document.getElementById('itinerary');
-    if (!day) {
-      container.textContent = 'No itinerary for today';
-      return;
-    }
-    let html = '';
-    if (day.accommodation) {
-      html += `<h3>Accommodation</h3><p>${day.accommodation.name}<br>${day.accommodation.address}</p>`;
-    }
-    if (day.travel) {
-      html += `<h3>Travel</h3><p>${day.travel}</p>`;
-    }
-    if (day.activities && day.activities.length) {
-      html += '<h3>Activities</h3><ul>' +
-        day.activities.map(a => `<li>${a.start ? a.start + ' - ' : ''}${a.end ? a.end + ': ' : ''}${a.title}</li>`).join('') + '</ul>';
-    }
-    container.innerHTML = html;
-
-    const freeBlocks = TripLogic.getFreeTimeBlocks(day);
-    const freeContainer = document.getElementById('free-time');
-    if (freeBlocks.length > 0) {
-      freeContainer.innerHTML = '<h3>Free Time</h3><ul>' +
-        freeBlocks.map(b => `<li>${b.start} - ${b.end}</li>`).join('') + '</ul>';
-    } else {
-      freeContainer.textContent = 'No free time today';
-    }
+  if (navigator.geolocation && navigator.geolocation.getCurrentPosition) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      applyLocation(pos.coords.latitude, pos.coords.longitude);
+    }, handleNoGeo);
+  } else {
+    handleNoGeo();
   }
+}
 
   function fetchSuggestions(lat, lon) {
     const apiKey = getEnv('FSQ_API_KEY');
@@ -511,12 +382,27 @@ if (typeof module !== 'undefined' && module.exports) {
       .catch(() => {
         if (container) container.textContent = 'Could not load suggestions';
       });
+document.addEventListener('DOMContentLoaded', () => {
+  const datePicker = document.getElementById('date-picker');
+  const prevBtn = document.getElementById('prev-date');
+  const nextBtn = document.getElementById('next-date');
+  if (datePicker) {
+    datePicker.addEventListener('change', (e) => initDashboard(e.target.value));
   }
-  // use global displayItinerary and fetchSuggestions
+  prevBtn && prevBtn.addEventListener('click', () => {
+    const d = new Date(datePicker.value);
+    d.setDate(d.getDate() - 1);
+    initDashboard(d.toISOString().split('T')[0]);
+  });
+  nextBtn && nextBtn.addEventListener('click', () => {
+    const d = new Date(datePicker.value);
+    d.setDate(d.getDate() + 1);
+    initDashboard(d.toISOString().split('T')[0]);
+  });
+  initDashboard();
 });
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { initDashboard, displayItinerary };
-  module.exports = { initDashboard, loadRoutes };
-  module.exports = {};
+  module.exports = { initDashboard, displayItinerary, loadRoutes };
 }
+

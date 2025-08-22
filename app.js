@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function initDashboard() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = TripLogic.getLocalDateString();
     const day = TripLogic.getItineraryForDate(today);
     currentDay = day;
     displayItinerary(day);

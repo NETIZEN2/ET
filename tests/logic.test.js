@@ -1,9 +1,14 @@
 const assert = require('assert');
-const { getItineraryForDate, getFreeTimeBlocks } = require('../logic.js');
+const { getItineraryForDate, getFreeTimeBlocks, getLocalDateString } = require('../logic.js');
 
 // Test itinerary retrieval
 const day = getItineraryForDate('2023-09-14');
 assert(day.accommodation.name.includes('Pullman Paris'), 'Itinerary lookup failed');
+
+// Test local date retrieval across time zones
+const date = new Date('2023-09-13T23:00:00Z');
+assert.strictEqual(getLocalDateString(date, 'America/New_York'), '2023-09-13', 'NY date conversion failed');
+assert.strictEqual(getLocalDateString(date, 'Europe/Paris'), '2023-09-14', 'Paris date conversion failed');
 
 // Test free time calculation
 const sampleDay = {

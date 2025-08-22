@@ -73,6 +73,20 @@ function initDashboard() {
   displayItinerary(day);
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      if (day && day.accommodation) {
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.accommodation.address)}&origin=${lat},${lon}`;
+      document.getElementById('maps-link').href = mapsUrl;
+      }
+      fetchSuggestions(lat, lon);
+      if (day && day.accommodation) {
+        loadRoutes(lat, lon, day.accommodation.address);
+      }
+    }, () => {
+      document.getElementById('location').textContent = 'Location unavailable';
+    });
       applyLocation(pos.coords.latitude, pos.coords.longitude);
     }, handleNoGeo);
   } else {
@@ -122,6 +136,30 @@ function fetchSuggestions(lat, lon) {
     });
 }
 
+async function loadRoutes(lat, lon, destination) {
+  const container = document.getElementById('routes');
+  if (!container || !destination) return;
+  const modes = [
+    { mode: 'transit', label: 'Transit', link: `https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${encodeURIComponent(destination)}&travelmode=transit` },
+    { mode: 'walking', label: 'Walking', link: `https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${encodeURIComponent(destination)}&travelmode=walking` },
+    { mode: 'driving', label: 'Taxi/Ride-share', link: `https://m.uber.com/ul/?action=setPickup&pickup[latitude]=${lat}&pickup[longitude]=${lon}&dropoff[formatted_address]=${encodeURIComponent(destination)}` }
+  ];
+  try {
+    const base = `https://maps.googleapis.com/maps/api/directions/json?origin=${lat},${lon}&destination=${encodeURIComponent(destination)}`;
+    const results = await Promise.all(modes.map(async m => {
+      const res = await fetch(`${base}&mode=${m.mode}`);
+      const json = await res.json();
+      const duration = json.routes && json.routes[0] && json.routes[0].legs && json.routes[0].legs[0] && json.routes[0].legs[0].duration && json.routes[0].legs[0].duration.text ? json.routes[0].legs[0].duration.text : 'N/A';
+      return { label: m.label, duration, link: m.link };
+    }));
+    container.innerHTML = '<h3>Routes</h3><ul>' +
+      results.map(r => `<li>${r.label}: ${r.duration} - <a href="${r.link}" target="_blank">Open in ${r.label === 'Taxi/Ride-share' ? 'Uber' : 'Maps'}</a></li>`).join('') +
+      '</ul>';
+  } catch (e) {
+    container.textContent = 'Could not load route information';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const loginSection = document.getElementById('login');
   const dashboard = document.getElementById('dashboard');
@@ -166,6 +204,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateMap(lat, lon, currentDay);
     fetchSuggestions(lat, lon);
+    if (currentDay && currentDay.accommodation) {
+      loadRoutes(lat, lon, currentDay.accommodation.address);
+    }
   }
 
   setLocationBtn.addEventListener('click', () => {
@@ -297,5 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { initDashboard, loadRoutes };
   module.exports = {};
 }

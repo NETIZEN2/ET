@@ -1,9 +1,25 @@
 let map, userMarker, accommodationMarker;
 
+function getEnv(name) {
+  if (typeof process !== 'undefined' && process.env && process.env[name]) {
+    return process.env[name];
+  }
+  if (typeof window !== 'undefined' && window[name]) {
+    return window[name];
+  }
+  return '';
+}
+
 function updateMap(lat, lon, day) {
   if (typeof mapboxgl === 'undefined') return;
+  const token = getEnv('MAPBOX_TOKEN') || getEnv('FSQ_API_KEY');
+  if (!token) {
+    const el = typeof document !== 'undefined' ? document.getElementById('map') : null;
+    if (el) el.textContent = 'Map cannot load: missing MAPBOX_TOKEN';
+    return;
+  }
   if (!map) {
-    mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+    mapboxgl.accessToken = token;
     map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -217,37 +233,40 @@ function pinItem(title) {
   }
 }
 
-function fetchSuggestions(lat, lon) {
-  const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
-  const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
-  fetch(url, { headers: { 'Authorization': apiKey } })
-    .then(res => res.json())
-    .then(data => {
-      const list = data.query.geosearch.map(p => `<li><button class="pin" data-title="${p.title}">Pin</button> ${p.title}</li>`).join('');
-      document.getElementById('suggestions').innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
-      document.querySelectorAll('#suggestions .pin').forEach(btn => {
-        btn.addEventListener('click', () => pinItem(btn.getAttribute('data-title')));
-      const list = (data.results || []).map(p => {
-        const lat = p.geocodes.main.latitude;
-        const lon = p.geocodes.main.longitude;
-        return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${lat}" data-lon="${lon}">Pin</button></li>`;
-      }).join('');
-      document.getElementById('suggestions').innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
-      document.querySelectorAll('.pin-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const { name, lat, lon } = btn.dataset;
-          fetch('/api/pins', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+  function fetchSuggestions(lat, lon) {
+    const apiKey = getEnv('FSQ_API_KEY');
+    const container = typeof document !== 'undefined' ? document.getElementById('suggestions') : null;
+    if (!apiKey) {
+      if (container) container.textContent = 'Nearby suggestions unavailable: missing FSQ_API_KEY';
+      return;
+    }
+    const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
+    fetch(url, { headers: { 'Authorization': apiKey } })
+      .then(res => res.json())
+      .then(data => {
+        const list = (data.results || []).map(p => {
+          const plat = p.geocodes.main.latitude;
+          const plon = p.geocodes.main.longitude;
+          return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${plat}" data-lon="${plon}">Pin</button></li>`;
+        }).join('');
+        if (container) {
+          container.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+          container.querySelectorAll('.pin-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const { name, lat, lon } = btn.dataset;
+              fetch('/api/pins', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+              });
+            });
           });
-        });
+        }
+      })
+      .catch(() => {
+        if (container) container.textContent = 'Could not load suggestions';
       });
-    })
-    .catch(() => {
-      document.getElementById('suggestions').textContent = 'Could not load suggestions';
-    });
-}
+  }
 
 let currentDay;
 let currentDate;
@@ -460,30 +479,37 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 
   function fetchSuggestions(lat, lon) {
-    const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
+    const apiKey = getEnv('FSQ_API_KEY');
+    const container = document.getElementById('suggestions');
+    if (!apiKey) {
+      if (container) container.textContent = 'Nearby suggestions unavailable: missing FSQ_API_KEY';
+      return;
+    }
     const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
     fetch(url, { headers: { 'Authorization': apiKey } })
       .then(res => res.json())
       .then(data => {
         const list = (data.results || []).map(p => {
-          const lat = p.geocodes.main.latitude;
-          const lon = p.geocodes.main.longitude;
-          return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${lat}" data-lon="${lon}">Pin</button></li>`;
+          const plat = p.geocodes.main.latitude;
+          const plon = p.geocodes.main.longitude;
+          return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${plat}" data-lon="${plon}">Pin</button></li>`;
         }).join('');
-        document.getElementById('suggestions').innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
-        document.querySelectorAll('.pin-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const { name, lat, lon } = btn.dataset;
-            fetch('/api/pins', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+        if (container) {
+          container.innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+          container.querySelectorAll('.pin-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const { name, lat, lon } = btn.dataset;
+              fetch('/api/pins', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+              });
             });
           });
-        });
+        }
       })
       .catch(() => {
-        document.getElementById('suggestions').textContent = 'Could not load suggestions';
+        if (container) container.textContent = 'Could not load suggestions';
       });
   }
   // use global displayItinerary and fetchSuggestions

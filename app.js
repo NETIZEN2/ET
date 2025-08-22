@@ -169,6 +169,24 @@ function displayItinerary(day) {
   }
 }
 
+function renderItineraryList(entries) {
+  const container = document.getElementById('itinerary-list');
+  if (!container) return;
+  container.innerHTML = '';
+  (entries || []).forEach(item => {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = `${item.date} - ${item.location}`;
+    details.appendChild(summary);
+    if (item.notes) {
+      const p = document.createElement('p');
+      p.textContent = item.notes;
+      details.appendChild(p);
+    }
+    container.appendChild(details);
+  });
+}
+
 function displayPinned(date) {
   const key = `pinned-${date}`;
   const items = JSON.parse((typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '[]');
@@ -331,10 +349,17 @@ document.addEventListener('DOMContentLoaded', () => {
     d.setDate(d.getDate() + 1);
     initDashboard(d.toISOString().split('T')[0]);
   });
+  fetch('/api/itinerary')
+    .then(res => res.json())
+    .then(data => renderItineraryList(data))
+    .catch(() => {
+      const c = document.getElementById('itinerary-list');
+      if (c) c.textContent = 'Could not load itinerary';
+    });
   initDashboard();
 });
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { initDashboard, displayItinerary, loadRoutes };
+  module.exports = { initDashboard, displayItinerary, loadRoutes, renderItineraryList };
 }
 

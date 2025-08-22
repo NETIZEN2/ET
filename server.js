@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const itinerary = require('./itinerary.js');
 
 const pinsFile = path.join(__dirname, 'pins.json');
 
@@ -51,6 +52,12 @@ function handleApi(req, res) {
     const pins = readPins();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(pins));
+    return true;
+  }
+  if (req.method === 'GET' && req.url === '/api/itinerary') {
+    const entries = itinerary.entries || [];
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(entries));
     return true;
   }
   return false;

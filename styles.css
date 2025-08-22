@@ -131,3 +131,15 @@ button:focus {
   }
 }
 
+#itinerary-list details {
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid #ccc;
+  border-radius: var(--radius);
+  padding: var(--spacing-sm);
+}
+
+#itinerary-list summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+

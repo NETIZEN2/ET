@@ -391,9 +391,27 @@
     return acc;
   }, {});
 
+  // Flatten entries for API consumption
+  const itineraryEntries = itineraryArray.map(day => {
+    let location = '';
+    if (day.accommodation && day.accommodation.name) {
+      location = day.accommodation.name;
+    } else if (day.travel) {
+      location = day.travel;
+    }
+    const notes = [];
+    if (day.travel) notes.push(day.travel);
+    if (Array.isArray(day.activities) && day.activities.length) {
+      notes.push(day.activities.map(a => a.title).join(', '));
+    }
+    return { date: day.date, location, notes: notes.join(' | ') };
+  });
+
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = itinerary;
+    module.exports.entries = itineraryEntries;
   } else {
     global.itinerary = itinerary;
+    global.itineraryEntries = itineraryEntries;
   }
 })(this);

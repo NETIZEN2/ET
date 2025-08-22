@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Interactive dashboard for Europe trip itinerary",
   "scripts": {
-    "test": "node tests/logic.test.js && node tests/index.test.js && node tests/accessibility.test.js",
+    "test": "node tests/logic.test.js && node tests/index.test.js && node tests/accessibility.test.js && node tests/itineraryEndpoint.test.js && node tests/itineraryRender.test.js",
     "start": "node server.js"
   }
 }

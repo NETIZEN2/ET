@@ -195,12 +195,38 @@ function displayItinerary(day) {
   }
 }
 
+function displayPinned(date) {
+  const key = `pinned-${date}`;
+  const items = JSON.parse(localStorage.getItem(key) || '[]');
+  const container = document.getElementById('pinned');
+  if (items.length) {
+    container.innerHTML = '<h3>Pinned</h3><ul>' + items.map(t => `<li>${t}</li>`).join('') + '</ul>';
+  } else {
+    container.innerHTML = '';
+  }
+}
+
+function pinItem(title) {
+  if (!currentDate) return;
+  const key = `pinned-${currentDate}`;
+  const items = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!items.includes(title)) {
+    items.push(title);
+    localStorage.setItem(key, JSON.stringify(items));
+    displayPinned(currentDate);
+  }
+}
+
 function fetchSuggestions(lat, lon) {
   const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
   const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
   fetch(url, { headers: { 'Authorization': apiKey } })
     .then(res => res.json())
     .then(data => {
+      const list = data.query.geosearch.map(p => `<li><button class="pin" data-title="${p.title}">Pin</button> ${p.title}</li>`).join('');
+      document.getElementById('suggestions').innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+      document.querySelectorAll('#suggestions .pin').forEach(btn => {
+        btn.addEventListener('click', () => pinItem(btn.getAttribute('data-title')));
       const list = (data.results || []).map(p => {
         const lat = p.geocodes.main.latitude;
         const lon = p.geocodes.main.longitude;
@@ -223,6 +249,47 @@ function fetchSuggestions(lat, lon) {
     });
 }
 
+let currentDay;
+let currentDate;
+let manualContainer;
+let manualInput;
+let setLocationBtn;
+let datePicker;
+
+function applyLocation(lat, lon) {
+  document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  if (currentDay && currentDay.accommodation) {
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentDay.accommodation.address)}&origin=${lat},${lon}`;
+    document.getElementById('maps-link').href = mapsUrl;
+  }
+  fetchSuggestions(lat, lon);
+}
+
+function initDashboard(selectedDate) {
+  currentDate = selectedDate || localStorage.getItem('lastDate') || TripLogic.getLocalDateString();
+  localStorage.setItem('lastDate', currentDate);
+  if (datePicker) datePicker.value = currentDate;
+  currentDay = TripLogic.getItineraryForDate(currentDate);
+  displayItinerary(currentDay);
+  displayPinned(currentDate);
+  const stored = localStorage.getItem('manualLocation');
+
+  function handleNoGeo() {
+    if (manualContainer) manualContainer.style.display = 'block';
+    if (stored) {
+      const [lat, lon] = stored.split(',').map(Number);
+      applyLocation(lat, lon);
+    } else {
+      document.getElementById('location').textContent = 'Location unavailable';
+    }
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      applyLocation(pos.coords.latitude, pos.coords.longitude);
+    }, handleNoGeo);
+  } else {
+    handleNoGeo();
 async function loadRoutes(lat, lon, destination) {
   const container = document.getElementById('routes');
   if (!container || !destination) return;
@@ -251,6 +318,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginSection = document.getElementById('login');
   const dashboard = document.getElementById('dashboard');
   const loginForm = document.getElementById('login-form');
+  manualContainer = document.getElementById('manual-location-container');
+  manualInput = document.getElementById('manual-location');
+  setLocationBtn = document.getElementById('set-location');
+  datePicker = document.getElementById('date-picker');
+  const prevBtn = document.getElementById('prev-date');
+  const nextBtn = document.getElementById('next-date');
   const manualContainer = document.getElementById('manual-location-container');
   const manualInput = document.getElementById('manual-location');
   const setLocationBtn = document.getElementById('set-location');
@@ -311,6 +384,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  datePicker.addEventListener('change', (e) => initDashboard(e.target.value));
+  prevBtn.addEventListener('click', () => {
+    const d = new Date(datePicker.value);
+    d.setDate(d.getDate() - 1);
+    initDashboard(d.toISOString().split('T')[0]);
+  });
+  nextBtn.addEventListener('click', () => {
+    const d = new Date(datePicker.value);
+    d.setDate(d.getDate() + 1);
+    initDashboard(d.toISOString().split('T')[0]);
+  });
+
   async function attemptAutoLogin() {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -346,6 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Incorrect password');
     }
   });
+});
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { initDashboard, pinItem, displayPinned };
 
   function initDashboard() {
     const today = TripLogic.getLocalDateString();

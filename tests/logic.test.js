@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { getItineraryForDate, getFreeTimeBlocks, getLocalDateString, haversineDistance } = require('../logic.js');
 const { getItineraryForDate, getFreeTimeBlocks, haversineDistance, getLocalDateString } = require('../logic.js');
 const itinerary = require('../itinerary.js');
 const { getItineraryForDate, getLocalDateString, getFreeTimeBlocks, haversineDistance } = require('../logic.js');
@@ -95,6 +96,7 @@ assert.strictEqual(getItineraryForDate('1900-01-01'), undefined, 'Missing itiner
 // Test getFreeTimeBlocks with no day
 assert.deepStrictEqual(getFreeTimeBlocks(), [{ start: '00:00', end: '24:00' }], 'Free time for undefined day should cover entire day');
 
+console.log('All tests passed');
 // Mocked geolocation success
 {
   const mockDoc = createMockDocument();

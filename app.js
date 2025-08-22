@@ -1,13 +1,59 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const password = 'eurotrip';
   const loginSection = document.getElementById('login');
   const dashboard = document.getElementById('dashboard');
   const loginForm = document.getElementById('login-form');
+  const manualContainer = document.getElementById('manual-location-container');
+  const manualInput = document.getElementById('manual-location');
+  const setLocationBtn = document.getElementById('set-location');
+  let currentDay;
 
-  loginForm.addEventListener('submit', (e) => {
+  function applyLocation(lat, lon) {
+    document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    if (currentDay && currentDay.accommodation) {
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentDay.accommodation.address)}&origin=${lat},${lon}`;
+      document.getElementById('maps-link').href = mapsUrl;
+    }
+    fetchSuggestions(lat, lon);
+  }
+
+  setLocationBtn.addEventListener('click', () => {
+    const [lat, lon] = manualInput.value.split(',').map(s => parseFloat(s.trim()));
+    if (isFinite(lat) && isFinite(lon)) {
+      localStorage.setItem('manualLocation', `${lat},${lon}`);
+      applyLocation(lat, lon);
+    } else {
+      alert('Please enter valid coordinates in "lat,lon" format');
+    }
+  });
+
+  async function attemptAutoLogin() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const res = await fetch('/api/validate', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      loginSection.style.display = 'none';
+      dashboard.style.display = 'block';
+      initDashboard();
+    } else {
+      localStorage.removeItem('token');
+    }
+  }
+
+  attemptAutoLogin();
+
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = document.getElementById('password').value;
-    if (input === password) {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: input })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('token', data.token);
       loginSection.style.display = 'none';
       dashboard.style.display = 'block';
       initDashboard();
@@ -17,22 +63,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function initDashboard() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = TripLogic.getLocalDateString();
     const day = TripLogic.getItineraryForDate(today);
+    currentDay = day;
     displayItinerary(day);
+    const stored = localStorage.getItem('manualLocation');
+
+    function handleNoGeo() {
+      manualContainer.style.display = 'block';
+      if (stored) {
+        const [lat, lon] = stored.split(',').map(Number);
+        applyLocation(lat, lon);
+      } else {
+        document.getElementById('location').textContent = 'Location unavailable';
+      }
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-        if (day && day.accommodation) {
-          const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.accommodation.address)}&origin=${lat},${lon}`;
-          document.getElementById('maps-link').href = mapsUrl;
-        }
-        fetchSuggestions(lat, lon);
-      }, () => {
-        document.getElementById('location').textContent = 'Location unavailable';
-      });
+        applyLocation(pos.coords.latitude, pos.coords.longitude);
+      }, handleNoGeo);
+    } else {
+      handleNoGeo();
     }
   }
 

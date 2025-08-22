@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { getItineraryForDate, getFreeTimeBlocks, getLocalDateString, haversineDistance } = require('../logic.js');
 const { getItineraryForDate, getFreeTimeBlocks, haversineDistance } = require('../logic.js');
 const itinerary = require('../itinerary.js');
 const { getItineraryForDate, getFreeTimeBlocks, haversineDistance, getLocalDateString } = require('../logic.js');
@@ -8,7 +9,15 @@ function createMockDocument() {
   const elements = {};
   return {
     getElementById: (id) => {
-      if (!elements[id]) elements[id] = { textContent: '', innerHTML: '', href: '' };
+      if (!elements[id]) elements[id] = {
+        textContent: '',
+        innerHTML: '',
+        href: '',
+        style: {},
+        value: '',
+        addEventListener: function (event, fn) { this['on' + event] = fn; },
+        trigger: function (event) { if (this['on' + event]) this['on' + event](); }
+      };
       return elements[id];
     },
     addEventListener: () => {},

@@ -130,6 +130,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const manualInput = document.getElementById('manual-location');
   const setLocationBtn = document.getElementById('set-location');
   let currentDay;
+  let clockInterval;
+
+  function startClock(timeZone) {
+    const header = document.querySelector('#dashboard header');
+    let clockEl = document.getElementById('clock');
+    if (!clockEl) {
+      clockEl = document.createElement('span');
+      clockEl.id = 'clock';
+      header.appendChild(clockEl);
+    }
+    const formatter = new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone
+    });
+    function update() {
+      clockEl.textContent = formatter.format(new Date());
+    }
+    update();
+    clearInterval(clockInterval);
+    clockInterval = setInterval(update, 60 * 1000);
+  }
+
+  function fetchTimezone(lat, lon) {
+    const url = `https://timeapi.io/api/TimeZone/coordinate?latitude=${lat}&longitude=${lon}`;
+    return fetch(url).then(res => res.json()).then(data => data.timeZone);
+  }
 
   function applyLocation(lat, lon) {
     document.getElementById('location').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
@@ -148,6 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('manualLocation', `${lat},${lon}`);
       }
       applyLocation(lat, lon);
+      fetchTimezone(lat, lon).then(startClock).catch(() => {
+        startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
+      });
     } else {
       alert('Please enter valid coordinates in "lat,lon" format');
     }
@@ -201,14 +231,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (stored) {
         const [lat, lon] = stored.split(',').map(Number);
         applyLocation(lat, lon);
+        fetchTimezone(lat, lon).then(startClock).catch(() => {
+          startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        });
       } else {
         document.getElementById('location').textContent = 'Location unavailable';
+        startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
       }
     }
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
-        applyLocation(pos.coords.latitude, pos.coords.longitude);
+        const { latitude, longitude } = pos.coords;
+        applyLocation(latitude, longitude);
+        fetchTimezone(latitude, longitude).then(startClock).catch(() => {
+          startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        });
       }, handleNoGeo);
     } else {
       handleNoGeo();
@@ -259,5 +297,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { initDashboard };
+  module.exports = {};
 }

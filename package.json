@@ -4,6 +4,11 @@
   "description": "Interactive dashboard for Europe trip itinerary",
   "scripts": {
     "test": "node tests/index.test.js && node tests/logic.test.js && node tests/login.test.js && node tests/map.test.js",
+    "test": "node tests/logic.test.js && node tests/timezone.test.js && node tests/index.test.js && node tests/login.test.js",
+    "test": "node tests/logic.test.js && node tests/index.test.js && node tests/login.test.js",
     "start": "node server.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
   }
 }

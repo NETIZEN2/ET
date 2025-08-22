@@ -3,6 +3,7 @@ body {
   background: #f5f5f5;
   color: #333;
   margin: 0;
+  font-size: 16px;
 }
 
 header {
@@ -15,6 +16,12 @@ header {
 #dashboard {
   display: none;
   padding: 1rem;
+  gap: 1rem;
+}
+
+#dashboard.active {
+  display: grid;
+  grid-template-columns: 1fr;
 }
 
 section {
@@ -45,4 +52,44 @@ button {
   color: white;
   border: none;
   border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  body {
+    font-size: 15px;
+  }
+  #dashboard.active {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 901px) {
+  #dashboard.active {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #121212;
+    color: #f5f5f5;
+  }
+  header {
+    background: #1e1e1e;
+    color: #f5f5f5;
+  }
+  section {
+    background: #1e1e1e;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  button {
+    background: #333;
+    color: #f5f5f5;
+  }
 }

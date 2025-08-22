@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('password').value;
     if (input === password) {
       loginSection.style.display = 'none';
-      dashboard.style.display = 'block';
+      dashboard.classList.add('active');
       initDashboard();
     } else {
       alert('Incorrect password');

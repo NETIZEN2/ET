@@ -1,9 +1,0 @@
-{
-  "name": "europe-trip-dashboard",
-  "version": "1.0.0",
-  "description": "Static travel dashboard",
-  "type": "module",
-  "scripts": {
-    "test": "node tests/data.test.js && node tests/structure.test.js"
-  }
-}

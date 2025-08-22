@@ -396,18 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboard(d.toISOString().split('T')[0]);
   });
 
-  async function attemptAutoLogin() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    const res = await fetch('/api/validate', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.ok) {
+  function attemptAutoLogin() {
+    if (localStorage.getItem('authorized') === 'true') {
       loginSection.style.display = 'none';
-      dashboard.style.display = 'block';
+      dashboard.classList.add('active');
       initDashboard();
-    } else {
-      localStorage.removeItem('token');
     }
   }
 
@@ -422,8 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
       body: JSON.stringify({ password: input })
     });
     if (res.ok) {
-      const data = await res.json();
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('authorized', 'true');
       loginSection.style.display = 'none';
       dashboard.classList.add('active');
       initDashboard();

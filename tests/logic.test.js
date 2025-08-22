@@ -1,6 +1,20 @@
 const assert = require('assert');
 const { getItineraryForDate, getFreeTimeBlocks, haversineDistance } = require('../logic.js');
 const itinerary = require('../itinerary.js');
+const { getItineraryForDate, getFreeTimeBlocks, haversineDistance, getLocalDateString } = require('../logic.js');
+const itinerary = require('../itinerary.js');
+
+function createMockDocument() {
+  const elements = {};
+  return {
+    getElementById: (id) => {
+      if (!elements[id]) elements[id] = { textContent: '', innerHTML: '', href: '' };
+      return elements[id];
+    },
+    addEventListener: () => {},
+    elements
+  };
+}
 
 // Test itinerary retrieval from object structure
 const day = getItineraryForDate('2023-09-14');

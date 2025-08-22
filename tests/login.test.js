@@ -1,7 +1,10 @@
 const assert = require('assert');
 const crypto = require('crypto');
 
-process.env.HASHED_PASSWORD = crypto.createHash('sha256').update('eurotrip').digest('hex');
+process.env.HASHED_PASSWORD = crypto
+  .createHash('sha256')
+  .update('3urotrip_1997!')
+  .digest('hex');
 process.env.JWT_SECRET = 'testsecret';
 process.env.TOKEN_EXPIRY_SECONDS = '1';
 
@@ -22,7 +25,7 @@ const { server, sessions, rateLimit } = require('../server.js');
   res = await fetch(`http://localhost:${port}/api/login`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ password: 'eurotrip' })
+    body: JSON.stringify({ password: '3urotrip_1997!' })
   });
   assert.strictEqual(res.status, 200, 'Login should succeed');
   const data = await res.json();

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { getItineraryForDate, getFreeTimeBlocks, haversineDistance } = require('../logic.js');
+const { getItineraryForDate, getFreeTimeBlocks, haversineDistance, getLocalDateString } = require('../logic.js');
 
 function createMockDocument() {
   const elements = {};
@@ -9,12 +9,11 @@ function createMockDocument() {
       return elements[id];
     },
     addEventListener: () => {},
+    querySelectorAll: () => [],
     elements
   };
 }
-const { getItineraryForDate, getFreeTimeBlocks } = require('../logic.js');
 const itinerary = require('../itinerary.js');
-const { getItineraryForDate, getFreeTimeBlocks, getLocalDateString } = require('../logic.js');
 
 // Test itinerary retrieval from object structure
 const directDay = itinerary['2023-09-14'];
@@ -75,7 +74,7 @@ assert.deepStrictEqual(getFreeTimeBlocks(), [{ start: '00:00', end: '24:00' }], 
   global.fetch = () => ({
     then: (resFn) => {
       resFn({ json: () => ({}) });
-      return { then: (dataFn) => { dataFn({ query: { geosearch: [] } }); return { catch: () => {} }; } };
+      return { then: (dataFn) => { dataFn({ results: [] }); return { catch: () => {} }; } };
     }
   });
   global.TripLogic = { getItineraryForDate: () => ({ accommodation: { address: 'Test' }, activities: [] }), getFreeTimeBlocks: () => [] };
@@ -100,7 +99,7 @@ assert.deepStrictEqual(getFreeTimeBlocks(), [{ start: '00:00', end: '24:00' }], 
   global.fetch = () => ({
     then: (resFn) => {
       resFn({ json: () => ({}) });
-      return { then: (dataFn) => { dataFn({ query: { geosearch: [] } }); return { catch: () => {} }; } };
+      return { then: (dataFn) => { dataFn({ results: [] }); return { catch: () => {} }; } };
     }
   });
   global.TripLogic = { getItineraryForDate: () => ({ accommodation: { address: 'Test' }, activities: [] }), getFreeTimeBlocks: () => [] };

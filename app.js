@@ -48,12 +48,27 @@ function displayItinerary(day) {
 }
 
 function fetchSuggestions(lat, lon) {
-  const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}%7C${lon}&gsradius=10000&gslimit=5&format=json&origin=*`;
-  fetch(url)
+  const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
+  const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
+  fetch(url, { headers: { 'Authorization': apiKey } })
     .then(res => res.json())
     .then(data => {
-      const list = data.query.geosearch.map(p => `<li>${p.title}</li>`).join('');
+      const list = (data.results || []).map(p => {
+        const lat = p.geocodes.main.latitude;
+        const lon = p.geocodes.main.longitude;
+        return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${lat}" data-lon="${lon}">Pin</button></li>`;
+      }).join('');
       document.getElementById('suggestions').innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+      document.querySelectorAll('.pin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const { name, lat, lon } = btn.dataset;
+          fetch('/api/pins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+          });
+        });
+      });
     })
     .catch(() => {
       document.getElementById('suggestions').textContent = 'Could not load suggestions';
@@ -180,12 +195,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function fetchSuggestions(lat, lon) {
-    const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}%7C${lon}&gsradius=10000&gslimit=5&format=json&origin=*`;
-    fetch(url)
+    const apiKey = typeof window !== 'undefined' ? (window.FSQ_API_KEY || '') : '';
+    const url = `https://api.foursquare.com/v3/places/search?ll=${lat},${lon}&categories=13000,16000,19014&limit=5`;
+    fetch(url, { headers: { 'Authorization': apiKey } })
       .then(res => res.json())
       .then(data => {
-        const list = data.query.geosearch.map(p => `<li>${p.title}</li>`).join('');
+        const list = (data.results || []).map(p => {
+          const lat = p.geocodes.main.latitude;
+          const lon = p.geocodes.main.longitude;
+          return `<li>${p.name} <button class="pin-btn" data-name="${p.name}" data-lat="${lat}" data-lon="${lon}">Pin</button></li>`;
+        }).join('');
         document.getElementById('suggestions').innerHTML = '<h3>Nearby Activities</h3><ul>' + list + '</ul>';
+        document.querySelectorAll('.pin-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const { name, lat, lon } = btn.dataset;
+            fetch('/api/pins', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, lat: parseFloat(lat), lon: parseFloat(lon) })
+            });
+          });
+        });
       })
       .catch(() => {
         document.getElementById('suggestions').textContent = 'Could not load suggestions';

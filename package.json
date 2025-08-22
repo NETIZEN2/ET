@@ -1,0 +1,8 @@
+{
+  "name": "europe-trip-dashboard",
+  "version": "1.0.0",
+  "description": "Interactive dashboard for Europe trip itinerary",
+  "scripts": {
+    "test": "node tests/logic.test.js"
+  }
+}
